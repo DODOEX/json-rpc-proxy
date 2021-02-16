@@ -22,7 +22,7 @@ server {
     return 200 "healthy\n";
   }
 
-  location / {
+   location / {
     proxy_cache json_rpc_cache;
     proxy_cache_methods POST;
     proxy_cache_key "$uri|$query_string|$request_body_md5";
@@ -36,22 +36,9 @@ server {
     proxy_ignore_headers Cache-Control;
     proxy_set_header Host ${ADDRESS};
 
-    add_header 'Access-Control-Allow-Origin' "*";
-    
-    add_header X-debug-message "A static file was served $host $query_string $args $arg_proxy" always;
-
-    if ($arg_proxy) {
-       set $upstream_address $arg_proxy;
-       proxy_pass $arg_proxy;
-    } 
-
     proxy_ssl_server_name on;
-
-    if ($arg_proxy = false) {
-      
-      set $upstream_address ${ADDRESS};
-      proxy_pass https://$upstream_address:443;  
-    }
+    set $upstream_address ${ADDRESS};
+    proxy_pass https://$upstream_address:443;
   }
 
   location /uploads/ {
