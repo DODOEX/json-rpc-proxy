@@ -36,8 +36,76 @@ server {
     proxy_ignore_headers Cache-Control;
     proxy_set_header Host ${ADDRESS};
 
+    add_header 'Access-Control-Allow-Origin' "*";
+    
+    add_header X-debug-message "A static file was served $host $query_string $args $arg_proxy" always;
+
+    if ($arg_proxy) {
+       set $upstream_address $arg_proxy;
+       proxy_pass $arg_proxy;
+    } 
+
     proxy_ssl_server_name on;
-    set $upstream_address ${ADDRESS};
+
+    if ($arg_proxy = false) {
+      
+      set $upstream_address ${ADDRESS};
+      proxy_pass https://$upstream_address:443;  
+    }
+  }
+
+  location /uploads/ {
+    proxy_cache json_rpc_cache;
+    proxy_cache_methods GET;
+    proxy_cache_key $uri$query_string;
+    proxy_cache_min_uses 1;
+    proxy_cache_lock on;
+    proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+    proxy_cache_valid 200 3600s;
+
+    proxy_hide_header Set-Cookie;
+    proxy_ignore_headers Set-Cookie;
+
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_ignore_headers Cache-Control;
+    proxy_set_header Host static.dodoex.io;
+
+    add_header 'Access-Control-Allow-Origin' "*";
+
+    add_header X-debug-message "KEY: $uri$query_string" always;
+    add_header X-debug-message "A static file was served $host $query_string $args $arg_proxy" always;
+
+    proxy_ssl_server_name on;
+    set $upstream_address static.dodoex.io;
     proxy_pass https://$upstream_address:443;
   }
+  
+  location /p/ {
+    proxy_cache json_rpc_cache;
+    proxy_cache_methods GET;
+    proxy_cache_key $uri$query_string;
+    proxy_cache_min_uses 1;
+    proxy_cache_lock on;
+    proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+    proxy_cache_valid 200 3600s;
+
+    proxy_hide_header Set-Cookie;
+    proxy_ignore_headers Set-Cookie;
+
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_ignore_headers Cache-Control;
+    proxy_set_header Host dodoex.coding.net;
+
+    add_header 'Access-Control-Allow-Origin' "*";
+
+    add_header X-debug-message "KEY: $uri$query_string" always;
+    add_header X-debug-message "A static file was served $host $query_string $args $arg_proxy" always;
+
+    proxy_ssl_server_name on;
+    set $upstream_address dodoex.coding.net;
+    proxy_pass https://$upstream_address:443;
+  }
+
 }
